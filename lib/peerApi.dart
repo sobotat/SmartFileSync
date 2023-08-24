@@ -92,8 +92,14 @@ class PeerApi {
       };
 
       _connection!.onIceCandidate = (candidate) async {
-        if (await _connection!.getRemoteDescription() != null) {
-          _connection!.addCandidate(candidate);
+        try {
+          final description = await _connection!.getRemoteDescription()
+              .onError((error, stackTrace) => throw Exception('Failed to get RemoteDescription'));
+          if (description != null) {
+            _connection!.addCandidate(candidate);
+          }
+        } on Exception catch (e) {
+          debugPrint('Failed to add Candidate > $e');
         }
         _connection!.getLocalDescription().then((description) {
           if (description != null) {
