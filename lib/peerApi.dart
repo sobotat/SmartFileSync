@@ -74,7 +74,7 @@ class PeerApi {
             };
             break;
         }
-        debugPrint("Data Chanel Opened [${_messageChannel!.label}]");
+        debugPrint("Data Chanel Opened [${channel.label}]");
       };
 
       _connection!.onConnectionState = (state) {
@@ -91,8 +91,10 @@ class PeerApi {
         }
       };
 
-      _connection!.onIceCandidate = (candidate) {
-        _connection!.addCandidate(candidate);
+      _connection!.onIceCandidate = (candidate) async {
+        if (await _connection!.getRemoteDescription() != null) {
+          _connection!.addCandidate(candidate);
+        }
         _connection!.getLocalDescription().then((description) {
           if (description != null) {
             onIceDescription(jsonEncode(description.toMap()));
@@ -108,6 +110,7 @@ class PeerApi {
     }
 
     isInit = true;
+    debugPrint("Init Done");
   }
 
   Future<String?> createOffer() async {
@@ -163,9 +166,12 @@ class PeerApi {
   }
 
   void sendMessage(String message) {
-    final state = _connection?.connectionState ?? RTCIceConnectionState.RTCIceConnectionStateFailed;
-    if (!isInit || _connection == null || state != RTCIceConnectionState.RTCIceConnectionStateConnected) {
+    if (!isInit || _connection == null) {
       debugPrint("Not Init");
+      return;
+    }
+    if (_connection!.connectionState != null && _connection!.connectionState != RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+      debugPrint("PeerState is not Connected");
       return;
     }
     if (_messageChannel == null) {
@@ -188,9 +194,12 @@ class PeerApi {
   }
 
   void sendData(String data) {
-    final state = _connection?.connectionState ?? RTCIceConnectionState.RTCIceConnectionStateFailed;
-    if (!isInit || _connection == null || state != RTCIceConnectionState.RTCIceConnectionStateConnected) {
+    if (!isInit || _connection == null) {
       debugPrint("Not Init");
+      return;
+    }
+    if (_connection!.connectionState != null && _connection!.connectionState != RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+      debugPrint("PeerState is not Connected : ${_connection!.connectionState}");
       return;
     }
     if (_dataChannel == null) {
