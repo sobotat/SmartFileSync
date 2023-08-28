@@ -53,8 +53,7 @@ class FileReceiverHandler extends MessageHandler {
     _peerApi.sendData(jsonEncode({
       'type': 'FileRejected',
     }));
-    isReceivingFile = false;
-    _fileChunked = null;
+    _resetReceiver();
   }
 
   void _receivedNewFileInfo(Map<String, dynamic> info) {
@@ -108,6 +107,7 @@ class FileReceiverHandler extends MessageHandler {
     _peerApi.sendData(jsonEncode({
       'type': 'FileReceived',
     }));
+    _resetReceiver();
   }
 
   void _resetReceiver() {
@@ -115,54 +115,4 @@ class FileReceiverHandler extends MessageHandler {
     isReceivingFile = false;
     _fileChunked = null;
   }
-
-  // void rec(String data) {
-  //   Map<String, dynamic> decoded = jsonDecode(data);
-  //   String fileName = decoded['fileName'];
-  //
-  //   if (decoded['index'] == 0) {
-  //     fileReceived = 0;
-  //     fileAccepted = false;
-  //     fileBuffer = [];
-  //     await showDialog<String>(
-  //         context: context,
-  //         builder: (BuildContext context) => AcceptDialog(
-  //               fileName: fileName,
-  //               onSelected: (value) {
-  //                 fileAccepted = value;
-  //               },
-  //             ));
-  //
-  //     if (!fileAccepted) {
-  //       debugPrint('File not accepted');
-  //       return;
-  //     }
-  //   }
-  //
-  //   List<int> bytes =
-  //       (decoded['data'] as List<dynamic>).map((e) => e as int).toList();
-  //   if (fileBuffer.length < decoded['maxIndex']) {
-  //     while (fileBuffer.length < decoded['maxIndex']) {
-  //       fileBuffer.add([]);
-  //     }
-  //   }
-  //   fileBuffer[decoded['index']] = bytes;
-  //   debugPrint(
-  //       'File Progress [${decoded['index'] + 1}/${decoded['maxIndex']}]');
-  //
-  //   fileReceived += 1;
-  //   debugPrint('Received $fileReceived');
-  //   if (fileReceived == decoded['maxIndex'] && fileAccepted) {
-  //     final List<int> buffer = [];
-  //     for (List<int> item in fileBuffer) {
-  //       buffer.addAll(item);
-  //     }
-  //
-  //     final anchor = AnchorElement(
-  //         href:
-  //             "data:application/octet-stream;charset=utf-16le;base64,${base64Encode(buffer)}")
-  //       ..setAttribute("download", decoded['fileName'])
-  //       ..click();
-  //   }
-  // }
 }
