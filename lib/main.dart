@@ -246,10 +246,13 @@ class _MainPageState extends State<MainPage> {
       debugPrint('Chunked File is null');
       return;
     }
+    var bytes = fileChunked.fileBytes;
+    debugPrint('N[${fileChunked.fileName}] FS[${fileChunked.fileSize}] BS[${bytes.length}]');
 
-    debugPrint('N[${fileChunked.fileName}] FS[${fileChunked.fileSize}] BS[${fileChunked.fileBytes.length}]');
-
-    //TODO: implement download of File
+    final anchor = AnchorElement(
+        href: "data:application/octet-stream;charset=utf-16le;base64,${base64Encode(bytes)}")
+      ..setAttribute("download", fileChunked.fileName)
+      ..click();
 
   }
 

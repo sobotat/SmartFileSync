@@ -95,12 +95,13 @@ class FileReceiverHandler extends MessageHandler {
 
     if (missing.isNotEmpty) {
       //TODO: implement missing resent and remove _sendFileReceived
-      _sendFileReceived();
       _completer!.completeError(Exception('Missing Chunks $missing'));
+      _sendFileReceived();
       return;
     }
-    _sendFileReceived();
+
     _completer!.complete(_fileChunked);
+    _sendFileReceived();
   }
 
   void _sendFileReceived(){
