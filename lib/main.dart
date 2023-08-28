@@ -4,6 +4,7 @@ import 'dart:html';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:smart_file_sync/fileTransfer.dart';
 import 'package:smart_file_sync/peerApi.dart';
 
 void main() {
@@ -144,19 +145,18 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
 
   PeerApi? peerApi;
+  FileTransfer? fileTransfer;
+
   List<String> messages = [];
-  String? description;
+
+  String? connectDescription;
+  String connectionState = 'Closed';
+  bool showConnectData = false;
+
   final connectStringController = TextEditingController();
   final messageController = TextEditingController();
   final messageFocus = FocusNode();
   final scrollController = ScrollController();
-  int index = 0;
-  String connectionState = 'Closed';
-  bool showConnectData = false;
-
-  bool fileAccepted = false;
-  List<List<int>> fileBuffer = [];
-  int fileReceived = 0;
 
   @override
   void initState() {
@@ -180,9 +180,9 @@ class _MainPageState extends State<MainPage> {
     peerApi = PeerApi(userId: widget.username,
       onIceDescription: (iceDescription) {
         setState(() {
-          description = iceDescription;
+          connectDescription = iceDescription;
         });
-        Clipboard.setData(ClipboardData(text: description ?? ''));
+        Clipboard.setData(ClipboardData(text: connectDescription ?? ''));
       },
       onMessage: (message) {
         setState(() {
@@ -193,54 +193,6 @@ class _MainPageState extends State<MainPage> {
           );
         });
         debugPrint(' > :: $message');
-      },
-      onData: (data) async {
-        Map<String, dynamic> decoded = jsonDecode(data);
-        String fileName = decoded['fileName'];
-
-        if (decoded['index'] == 0) {
-          fileReceived = 0;
-          fileAccepted = false;
-          fileBuffer = [];
-          await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) =>
-                  AcceptDialog(
-                    fileName: fileName,
-                    onSelected: (value) {
-                      fileAccepted = value;
-                    },
-                  )
-          );
-
-          if (!fileAccepted) {
-            debugPrint('File not accepted');
-            return;
-          }
-        }
-
-        List<int> bytes = (decoded['data'] as List<dynamic>).map((e) => e as int).toList();
-        if (fileBuffer.length < decoded['maxIndex']){
-          while (fileBuffer.length < decoded['maxIndex']) {
-            fileBuffer.add([]);
-          }
-        }
-        fileBuffer[decoded['index']] = bytes;
-        debugPrint('File Progress [${decoded['index'] + 1}/${decoded['maxIndex']}]');
-
-        fileReceived += 1;
-        debugPrint('Received $fileReceived');
-        if (fileReceived == decoded['maxIndex'] && fileAccepted) {
-          final List<int> buffer = [];
-          for (List<int> item in fileBuffer) {
-            buffer.addAll(item);
-          }
-
-          final anchor = AnchorElement(
-              href: "data:application/octet-stream;charset=utf-16le;base64,${base64Encode(buffer)}")
-            ..setAttribute("download", decoded['fileName'])
-            ..click();
-        }
       },
       onConnected: () { setState(() {
         connectionState = 'Connected';
@@ -258,6 +210,11 @@ class _MainPageState extends State<MainPage> {
         connectionState = 'Failed';
       }); },
     );
+
+    fileTransfer = FileTransfer(
+      peerApi: peerApi!
+    );
+
     setState(() { });
   }
 
@@ -282,22 +239,12 @@ class _MainPageState extends State<MainPage> {
   }
 
   void send() {
-    List<String> tmpData = [
-      'Hello',
-      'Test',
-      'Something',
-      'IDK',
-      'Peer',
-      'WTF',
-    ];
+    if (messageController.text == '') return;
 
-    String message = messageController.text == '' ? tmpData[index] : messageController.text;
+    String message = messageController.text;
 
     debugPrint('Trying send > $message');
     peerApi!.sendMessage(message);
-
-    index += 1;
-    if (index >= tmpData.length) index = 0;
 
     setState(() {
       messageController.text = '';
@@ -312,33 +259,17 @@ class _MainPageState extends State<MainPage> {
       final fileBytes = result.files.first.bytes;
       final fileName = result.files.first.name;
 
-      int index = 0;
-      final int maxIndex = (fileBytes!.length / 15000).ceil();
-      while(index < maxIndex) {
-        List<int> sendBytes = [];
-
-        int chunkSize = 15000;
-        int startIndex = index * chunkSize;
-        int endIndex = (index + 1) * chunkSize;
-
-        for(int i = startIndex; i < endIndex; i++) {
-          if (i > fileBytes.length - 1) break;
-          sendBytes.add(fileBytes[i]);
-        }
-
-        peerApi!.sendData(jsonEncode({
-          'fileName': fileName,
-          'index': index,
-          'maxIndex': maxIndex,
-          'data': sendBytes,
-        }));
-
-        index += 1;
-        debugPrint('Send [$index/$maxIndex]');
-        await Future.delayed(const Duration(milliseconds: 5));
+      if (fileTransfer == null) {
+        debugPrint('Cannot Send File: FileTransfer is null');
+        return;
       }
+
+      await fileTransfer!.sendFile(
+        fileName: fileName,
+        fileBytes: List.from(fileBytes!)
+      );
+      debugPrint('File Send');
     }
-    debugPrint('File Send');
   }
 
   @override
