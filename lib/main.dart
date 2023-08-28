@@ -411,7 +411,7 @@ class _MainPageState extends State<MainPage> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          SizedBox(width: 10,),
+                                          const SizedBox(width: 10,),
                                           Flexible(
                                             child: Text(
                                               message['message'],
@@ -501,7 +501,7 @@ class _MainPageState extends State<MainPage> {
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
+          (connectionState != 'Connected' || showConnectData) ? Padding(
             padding: const EdgeInsets.all(2),
             child: FloatingActionButton(
               heroTag: 1,
@@ -509,7 +509,7 @@ class _MainPageState extends State<MainPage> {
               tooltip: 'Invite',
               child: const Icon(Icons.arrow_forward),
             ),
-          ),
+          ) : Container(),
           Padding(
             padding: const EdgeInsets.all(2),
             child: FloatingActionButton(
