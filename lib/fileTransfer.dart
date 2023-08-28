@@ -51,7 +51,9 @@ class FileTransfer {
       fileSize: fileBytes.length,
       chunkCount: chunkedBytes.length,
       chunkedBytes: chunkedBytes,
-    );
+    ).onError((error, stackTrace) {
+      print(error.toString());
+    });
 
     updateHandler(false);
   }
