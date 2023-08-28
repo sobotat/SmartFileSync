@@ -1,7 +1,5 @@
 
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:smart_file_sync/fileChunked.dart';
 import 'package:smart_file_sync/fileReceiverHandler.dart';
@@ -37,7 +35,6 @@ class FileTransfer {
       debugPrint('Already sending file');
       return;
     }
-
 
     List<List<int>> chunkedBytes = await _chunkData(fileBytes, 15000)
         .onError((error, stackTrace) {
