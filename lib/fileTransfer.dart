@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:smart_file_sync/fileChunked.dart';
 import 'package:smart_file_sync/fileReceiverHandler.dart';
 import 'package:smart_file_sync/fileSenderHandler.dart';
 import 'package:smart_file_sync/messageHandler.dart';
@@ -11,13 +12,17 @@ import 'package:smart_file_sync/peerApi.dart';
 class FileTransfer {
 
   FileTransfer({
-    required this.peerApi
+    required this.peerApi,
+    required this.onReceivedInfo,
+    this.onProgress,
   }) {
     updateHandler(false);
   }
 
   PeerApi peerApi;
   late MessageHandler messageHandler;
+  Function(FileChunked fileInfo) onReceivedInfo;
+  Function(double progress)? onProgress;
 
   Future<void> sendFile({
     required String fileName,
@@ -50,6 +55,19 @@ class FileTransfer {
 
     updateHandler(false);
   }
+
+  Future<FileChunked?> acceptFile() {
+    if (messageHandler is! FileReceiverHandler) return Future(() => null);
+    var handler = messageHandler as FileReceiverHandler;
+    return handler.acceptFile();
+  }
+
+  void rejectFile() {
+    if (messageHandler is! FileReceiverHandler) return;
+    var handler = messageHandler as FileReceiverHandler;
+    handler.rejectFile();
+  }
+
 
   Future<List<List<int>>> _chunkData(List<int> fileBytes, int chunkSize) {
     return Future<List<List<int>>>(() {

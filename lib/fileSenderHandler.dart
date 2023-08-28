@@ -67,6 +67,11 @@ class FileSenderHandler extends MessageHandler {
       }));
 
       index += 1;
+
+      if(_fileTransfer.onProgress != null) {
+        _fileTransfer.onProgress!(index / _chunkedBytes.length);
+      }
+
       await Future.delayed(const Duration(milliseconds: 5));
     }
 

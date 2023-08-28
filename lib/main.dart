@@ -4,6 +4,7 @@ import 'dart:html';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:smart_file_sync/fileChunked.dart';
 import 'package:smart_file_sync/fileTransfer.dart';
 import 'package:smart_file_sync/peerApi.dart';
 
@@ -152,6 +153,7 @@ class _MainPageState extends State<MainPage> {
   String? connectDescription;
   String connectionState = 'Closed';
   bool showConnectData = false;
+  double progress = 0;
 
   final connectStringController = TextEditingController();
   final messageController = TextEditingController();
@@ -212,10 +214,49 @@ class _MainPageState extends State<MainPage> {
     );
 
     fileTransfer = FileTransfer(
-      peerApi: peerApi!
+      peerApi: peerApi!,
+      onReceivedInfo: (fileInfo) => onReceivedInfo(fileInfo),
+      onProgress: (progress) => onProgress(progress),
     );
 
     setState(() { });
+  }
+
+  void onReceivedInfo (FileChunked fileInfo) async {
+    bool fileAccepted = false;
+    await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AcceptDialog(
+          fileName: fileInfo.fileName,
+          onSelected: (value) {
+            fileAccepted = value;
+          },
+        )
+    );
+
+    if (fileTransfer != null && fileAccepted) {
+      fileTransfer!.acceptFile().then((value) => receivedFile(value));
+    } else if (fileTransfer != null && !fileAccepted) {
+      fileTransfer!.rejectFile();
+    }
+  }
+
+  void receivedFile(FileChunked? fileChunked) {
+    if (fileChunked == null) {
+      debugPrint('Chunked File is null');
+      return;
+    }
+
+    debugPrint('N[${fileChunked.fileName}] FS[${fileChunked.fileSize}] BS[${fileChunked.fileBytes.length}]');
+
+    //TODO: implement download of File
+
+  }
+
+  void onProgress(double progress) {
+    setState(() {
+      this.progress = progress;
+    });
   }
 
   void createOffer() {
@@ -302,6 +343,14 @@ class _MainPageState extends State<MainPage> {
       ),
       body: Stack(
         children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: progress == 0 || progress == 1 ? Container() :
+            LinearProgressIndicator(
+              minHeight: 5,
+              value: progress,
+            ),
+          ),
           Center(
             child: FractionallySizedBox(
               heightFactor: 0.75,

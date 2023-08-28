@@ -13,6 +13,8 @@ class FileChunked {
 
   String fileName;
   int fileSize;
+
+  int addedChunks = 0;
   int chunkCount;
   List<List<int>> chunkBytes = [];
 
@@ -21,6 +23,7 @@ class FileChunked {
     required List<int> chunk
   }) {
     chunkBytes[index] = chunk;
+    addedChunks += 1;
   }
 
   List<int> checkForMissingChunks(){

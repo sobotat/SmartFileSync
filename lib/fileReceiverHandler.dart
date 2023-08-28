@@ -48,7 +48,7 @@ class FileReceiverHandler extends MessageHandler {
     return _completer!.future;
   }
 
-  void rejectedFile() {
+  void rejectFile() {
     print('File Rejected');
     _peerApi.sendData(jsonEncode({
       'type': 'FileRejected',
@@ -65,11 +65,7 @@ class FileReceiverHandler extends MessageHandler {
       chunkCount: info['chunkCount'],
     );
 
-    //TODO: make UI accept
-    acceptFile().then((value) {
-      var bytes = value.fileBytes;
-      print('N${value.fileName} FS${value.fileSize} BS${bytes.length}');
-    });
+    _fileTransfer.onReceivedInfo(_fileChunked!);
   }
 
   void _receivedFileData(Map<String, dynamic> data) {
@@ -87,6 +83,10 @@ class FileReceiverHandler extends MessageHandler {
       index: data['chunkIndex'],
       chunk: chunk,
     );
+
+    if(_fileTransfer.onProgress != null) {
+      _fileTransfer.onProgress!(_fileChunked!.addedChunks / _fileChunked!.chunkCount);
+    }
   }
 
   void _receivedFileSendComplete() {
