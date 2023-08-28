@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:html';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smart_file_sync/peerApi.dart';
@@ -150,6 +152,11 @@ class _MainPageState extends State<MainPage> {
   final scrollController = ScrollController();
   int index = 0;
   String connectionState = 'Closed';
+  bool showConnectData = false;
+
+  bool fileAccepted = false;
+  List<List<int>> fileBuffer = [];
+  int fileReceived = 0;
 
   @override
   void initState() {
@@ -187,6 +194,54 @@ class _MainPageState extends State<MainPage> {
         });
         debugPrint(' > :: $message');
       },
+      onData: (data) async {
+        Map<String, dynamic> decoded = jsonDecode(data);
+        String fileName = decoded['fileName'];
+
+        if (decoded['index'] == 0) {
+          fileReceived = 0;
+          fileAccepted = false;
+          fileBuffer = [];
+          await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) =>
+                  AcceptDialog(
+                    fileName: fileName,
+                    onSelected: (value) {
+                      fileAccepted = value;
+                    },
+                  )
+          );
+
+          if (!fileAccepted) {
+            debugPrint('File not accepted');
+            return;
+          }
+        }
+
+        List<int> bytes = (decoded['data'] as List<dynamic>).map((e) => e as int).toList();
+        if (fileBuffer.length < decoded['maxIndex']){
+          while (fileBuffer.length < decoded['maxIndex']) {
+            fileBuffer.add([]);
+          }
+        }
+        fileBuffer[decoded['index']] = bytes;
+        debugPrint('File Progress [${decoded['index'] + 1}/${decoded['maxIndex']}]');
+
+        fileReceived += 1;
+        debugPrint('Received $fileReceived');
+        if (fileReceived == decoded['maxIndex'] && fileAccepted) {
+          final List<int> buffer = [];
+          for (List<int> item in fileBuffer) {
+            buffer.addAll(item);
+          }
+
+          final anchor = AnchorElement(
+              href: "data:application/octet-stream;charset=utf-16le;base64,${base64Encode(buffer)}")
+            ..setAttribute("download", decoded['fileName'])
+            ..click();
+        }
+      },
       onConnected: () { setState(() {
         connectionState = 'Connected';
       }); },
@@ -219,6 +274,11 @@ class _MainPageState extends State<MainPage> {
   void connect() {
     if (peerApi == null) return;
     peerApi!.connect(connectStringController.text);
+
+    Map<String, dynamic> decoded = jsonDecode(connectStringController.text);
+    if (decoded['type'] == 'offer') {
+      createAnswer();
+    }
   }
 
   void send() {
@@ -245,6 +305,42 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  Future<void> sendFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null && result.files.isNotEmpty) {
+      final fileBytes = result.files.first.bytes;
+      final fileName = result.files.first.name;
+
+      int index = 0;
+      final int maxIndex = (fileBytes!.length / 15000).ceil();
+      while(index < maxIndex) {
+        List<int> sendBytes = [];
+
+        int chunkSize = 15000;
+        int startIndex = index * chunkSize;
+        int endIndex = (index + 1) * chunkSize;
+
+        for(int i = startIndex; i < endIndex; i++) {
+          if (i > fileBytes.length - 1) break;
+          sendBytes.add(fileBytes[i]);
+        }
+
+        peerApi!.sendData(jsonEncode({
+          'fileName': fileName,
+          'index': index,
+          'maxIndex': maxIndex,
+          'data': sendBytes,
+        }));
+
+        index += 1;
+        debugPrint('Send [$index/$maxIndex]');
+        await Future.delayed(const Duration(milliseconds: 5));
+      }
+    }
+    debugPrint('File Send');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -262,6 +358,16 @@ class _MainPageState extends State<MainPage> {
             )
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                showConnectData = !showConnectData;
+              });
+            },
+            icon: Icon(showConnectData ? Icons.remove : Icons.add),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -379,7 +485,7 @@ class _MainPageState extends State<MainPage> {
                         )
                       ],
                     ),
-                    connectionState != 'Connected' ? Column(
+                    (connectionState != 'Connected' || showConnectData) ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
@@ -420,7 +526,7 @@ class _MainPageState extends State<MainPage> {
             child: FloatingActionButton(
               heroTag: 1,
               onPressed: createOffer,
-              tooltip: 'Offer',
+              tooltip: 'Invite',
               child: const Icon(Icons.arrow_forward),
             ),
           ),
@@ -428,9 +534,9 @@ class _MainPageState extends State<MainPage> {
             padding: const EdgeInsets.all(2),
             child: FloatingActionButton(
               heroTag: 2,
-              onPressed: createAnswer,
-              tooltip: 'Answer',
-              child: const Icon(Icons.arrow_back),
+              onPressed: sendFile,
+              tooltip: 'File',
+              child: const Icon(Icons.file_upload),
             ),
           ),
         ],
@@ -453,5 +559,40 @@ class _MainPageState extends State<MainPage> {
       default:
         return Colors.purple;
     }
+  }
+}
+
+class AcceptDialog extends AlertDialog {
+  const AcceptDialog({
+    required this.fileName,
+    required this.onSelected,
+    super.key
+  });
+
+  final String fileName;
+  final Function(bool value) onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Accept file - $fileName'),
+      content: const Text('Are you want accept file'),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            onSelected(false);
+            Navigator.pop(context);
+          },
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            onSelected(true);
+            Navigator.pop(context);
+          },
+          child: const Text('OK'),
+        ),
+      ],
+    );
   }
 }

@@ -212,7 +212,6 @@ class PeerApi {
       debugPrint("Data Chanel is null");
       return;
     }
-
     _dataChannel!.send(RTCDataChannelMessage(data));
   }
 
