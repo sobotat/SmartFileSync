@@ -509,7 +509,7 @@ class _MainPageState extends State<MainPage> {
               tooltip: 'Invite',
               child: const Icon(Icons.arrow_forward),
             ),
-          ) : Container(),
+          ) : const SizedBox(width: 0, height: 0,),
           Padding(
             padding: const EdgeInsets.all(2),
             child: FloatingActionButton(
