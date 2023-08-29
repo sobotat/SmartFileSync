@@ -1,11 +1,11 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:smart_file_sync/files/transfer/FileChunked.dart';
-import 'package:smart_file_sync/files/transfer/FileReceiverHandler.dart';
-import 'package:smart_file_sync/files/transfer/FileSenderHandler.dart';
-import 'package:smart_file_sync/peer/MessageHandler.dart';
-import 'package:smart_file_sync/peer/PeerApi.dart';
+import 'package:smart_file_sync/src/files/transfer/FileChunked.dart';
+import 'package:smart_file_sync/src/files/transfer/FileReceiverHandler.dart';
+import 'package:smart_file_sync/src/files/transfer/FileSenderHandler.dart';
+import 'package:smart_file_sync/src/peer/MessageHandler.dart';
+import 'package:smart_file_sync/src/peer/PeerApi.dart';
 
 class FileTransfer {
 

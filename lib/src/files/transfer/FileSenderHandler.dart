@@ -2,9 +2,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:smart_file_sync/files/transfer/FileTransfer.dart';
-import 'package:smart_file_sync/peer/MessageHandler.dart';
-import 'package:smart_file_sync/peer/PeerApi.dart';
+import 'package:smart_file_sync/src/files/transfer/FileTransfer.dart';
+import 'package:smart_file_sync/src/peer/MessageHandler.dart';
+import 'package:smart_file_sync/src/peer/PeerApi.dart';
 
 class FileSenderHandler extends MessageHandler {
 
