@@ -4,9 +4,9 @@ import 'dart:html';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:smart_file_sync/fileChunked.dart';
-import 'package:smart_file_sync/fileTransfer.dart';
-import 'package:smart_file_sync/peerApi.dart';
+import 'package:smart_file_sync/files/transfer/FileChunked.dart';
+import 'package:smart_file_sync/files/transfer/FileTransfer.dart';
+import 'package:smart_file_sync/peer/PeerApi.dart';
 
 void main() {
   runApp(const MyApp());
