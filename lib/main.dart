@@ -4,28 +4,35 @@ import 'dart:html';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:smart_file_sync/files/transfer/FileChunked.dart';
-import 'package:smart_file_sync/files/transfer/FileTransfer.dart';
-import 'package:smart_file_sync/peer/PeerApi.dart';
+import 'package:smart_file_sync/src/config/AppRouter.dart';
+import 'package:smart_file_sync/src/files/transfer/FileChunked.dart';
+import 'package:smart_file_sync/src/files/transfer/FileTransfer.dart';
+import 'package:smart_file_sync/src/peer/PeerApi.dart';
+import 'package:smart_file_sync/src/security/AppSecurity.dart';
+import 'package:smart_file_sync/src/services/NetworkChecker.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key}) {
+    AppSecurity.instance.init();
+    NetworkChecker.instance.init();
+    AppRouter.instance.setNetworkListener();
+  }
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'SFS',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue.shade200),
         useMaterial3: true,
       ),
-      home: const SelectUsername(),
+      routerConfig: AppRouter.instance.router,
     );
   }
 }
