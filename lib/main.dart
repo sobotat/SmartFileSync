@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:html';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smart_file_sync/src/config/AppRouter.dart';
+import 'package:smart_file_sync/src/files/download/FileDownloader.dart';
 import 'package:smart_file_sync/src/files/transfer/FileChunked.dart';
 import 'package:smart_file_sync/src/files/transfer/FileTransfer.dart';
 import 'package:smart_file_sync/src/peer/PeerApi.dart';
@@ -12,6 +13,7 @@ import 'package:smart_file_sync/src/security/AppSecurity.dart';
 import 'package:smart_file_sync/src/services/NetworkChecker.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -256,10 +258,7 @@ class _MainPageState extends State<MainPage> {
     var bytes = fileChunked.fileBytes;
     debugPrint('N[${fileChunked.fileName}] FS[${fileChunked.fileSize}] BS[${bytes.length}]');
 
-    final anchor = AnchorElement(
-        href: "data:application/octet-stream;charset=utf-16le;base64,${base64Encode(bytes)}")
-      ..setAttribute("download", fileChunked.fileName)
-      ..click();
+    FileDownloader.instance.downloadFile(fileChunked);
 
   }
 
@@ -304,11 +303,13 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> sendFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      withData: true,
+    );
 
     if (result != null && result.files.isNotEmpty) {
-      final fileBytes = result.files.first.bytes;
-      final fileName = result.files.first.name;
+      String fileName = result.files.first.name;
+      List<int> fileBytes = List.from(result.files.first.bytes!);
 
       if (fileTransfer == null) {
         debugPrint('Cannot Send File: FileTransfer is null');
@@ -317,7 +318,7 @@ class _MainPageState extends State<MainPage> {
 
       await fileTransfer!.sendFile(
         fileName: fileName,
-        fileBytes: List.from(fileBytes!)
+        fileBytes: fileBytes,
       );
       debugPrint('File Send');
     }
