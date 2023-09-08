@@ -15,12 +15,12 @@ class AppRouter {
       GoRoute(
         path: '/',
         name: '/',
-        redirect: (context, state) {
-          if (!kIsWeb) {
-            return '/main';
-          }
-          return null;
-        },
+        // redirect: (context, state) {
+        //   if (!kIsWeb) {
+        //     return '/main';
+        //   }
+        //   return null;
+        // },
         builder: (context, state) {
           return const SelectUsername();
         },
