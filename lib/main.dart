@@ -163,6 +163,7 @@ class _MainPageState extends State<MainPage> {
   String connectionState = 'Closed';
   bool showConnectData = false;
   double progress = 0;
+  bool readingFile = false;
 
   final connectStringController = TextEditingController();
   final messageController = TextEditingController();
@@ -303,24 +304,39 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> sendFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      withData: true,
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      String fileName = result.files.first.name;
-      List<int> fileBytes = List.from(result.files.first.bytes!);
-
-      if (fileTransfer == null) {
-        debugPrint('Cannot Send File: FileTransfer is null');
-        return;
-      }
-
-      await fileTransfer!.sendFile(
-        fileName: fileName,
-        fileBytes: fileBytes,
+    setState(() {
+      readingFile = true;
+    });
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        withReadStream: true,
       );
-      debugPrint('File Send');
+
+      if (result != null && result.files.isNotEmpty) {
+        String fileName = result.files.first.name;
+        List<int> fileBytes = [];
+
+        debugPrint('File Read Started');
+        await for (List<int> bytes in result.files.first.readStream!) {
+          fileBytes.addAll(bytes);
+        }
+        debugPrint('File Read Completed');
+
+        if (fileTransfer == null) {
+          debugPrint('Cannot Send File: FileTransfer is null');
+          return;
+        }
+
+        await fileTransfer!.sendFile(
+          fileName: fileName,
+          fileBytes: fileBytes,
+        );
+        debugPrint('File Send');
+      }
+    } finally {
+      setState(() {
+        readingFile = false;
+      });
     }
   }
 
@@ -525,9 +541,9 @@ class _MainPageState extends State<MainPage> {
             padding: const EdgeInsets.all(2),
             child: FloatingActionButton(
               heroTag: 2,
-              onPressed: sendFile,
+              onPressed: !readingFile ? sendFile : null,
               tooltip: 'File',
-              child: const Icon(Icons.file_upload),
+              child: !readingFile ? const Icon(Icons.file_upload) : const CircularProgressIndicator(),
             ),
           ),
         ],
