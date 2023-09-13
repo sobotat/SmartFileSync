@@ -119,11 +119,11 @@ class _SelectUsernameState extends State<SelectUsername> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.cyan.shade200,
-                  Colors.blueAccent.shade200,
+                  const Color(0xffad6610),
+                  Theme.of(context).colorScheme.secondary,
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
               borderRadius: BorderRadius.circular(10),
             ),
