@@ -21,6 +21,7 @@ class FileTransfer {
   late MessageHandler messageHandler;
   Function(FileChunked fileInfo) onReceivedInfo;
   Function(double progress)? onProgress;
+  bool neededResendMissing = false;
 
   Future<void> sendFile({
     required String fileName,
@@ -56,12 +57,14 @@ class FileTransfer {
   }
 
   Future<FileChunked?> acceptFile() {
+    neededResendMissing = false;
     if (messageHandler is! FileReceiverHandler) return Future(() => null);
     var handler = messageHandler as FileReceiverHandler;
     return handler.acceptFile();
   }
 
   void rejectFile() {
+    neededResendMissing = false;
     if (messageHandler is! FileReceiverHandler) return;
     var handler = messageHandler as FileReceiverHandler;
     handler.rejectFile();
@@ -94,6 +97,7 @@ class FileTransfer {
   }
 
   void updateHandler(bool isSendingFile) {
+    neededResendMissing = false;
     messageHandler = isSendingFile
       ? FileSenderHandler(
       peerApi: peerApi,

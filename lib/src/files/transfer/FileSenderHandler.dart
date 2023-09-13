@@ -77,9 +77,9 @@ class FileSenderHandler extends MessageHandler {
       }
 
       while (true) {
+        await Future.delayed(const Duration(milliseconds: 1));
         int bufferAmount = _peerApi.getDataChannelBufferedAmount();
         if (bufferAmount <= 0) break;
-        await Future.delayed(const Duration(milliseconds: 1));
       }
     }
 
@@ -115,7 +115,9 @@ class FileSenderHandler extends MessageHandler {
 
   Future<void> _fileMissingBytes(Map<String, dynamic> response) async {
     List<int> missing = List<int>.from(response['missing'] ?? []);
-    int resented = 0;
+    int resent = 0;
+
+    _fileTransfer.neededResendMissing = true;
 
     print('Resending Missing Chunks $missing');
     for (int index in missing) {
@@ -125,16 +127,16 @@ class FileSenderHandler extends MessageHandler {
         'chunk': _chunkedBytes[index]
       }));
 
-      resented += 1;
+      resent += 1;
 
       if(_fileTransfer.onProgress != null) {
-        _fileTransfer.onProgress!((_chunkedBytes.length - missing.length + resented) / _chunkedBytes.length);
+        _fileTransfer.onProgress!((_chunkedBytes.length - missing.length + resent) / _chunkedBytes.length);
       }
 
       while (true) {
+        await Future.delayed(const Duration(milliseconds: 1));
         int bufferAmount = _peerApi.getDataChannelBufferedAmount();
         if (bufferAmount <= 0) break;
-        await Future.delayed(const Duration(milliseconds: 1));
       }
     }
 

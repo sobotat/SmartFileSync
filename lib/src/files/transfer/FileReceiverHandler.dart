@@ -98,6 +98,7 @@ class FileReceiverHandler extends MessageHandler {
         'type': 'FileMissingBytes',
         'missing': missing,
       }));
+      _fileTransfer.neededResendMissing = true;
       return;
     }
 
