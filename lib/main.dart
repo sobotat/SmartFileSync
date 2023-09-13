@@ -10,6 +10,7 @@ import 'package:smart_file_sync/src/files/transfer/FileChunked.dart';
 import 'package:smart_file_sync/src/files/transfer/FileTransfer.dart';
 import 'package:smart_file_sync/src/peer/PeerApi.dart';
 import 'package:smart_file_sync/src/security/AppSecurity.dart';
+import 'package:smart_file_sync/src/services/LocalStorage.dart';
 import 'package:smart_file_sync/src/services/NetworkChecker.dart';
 
 void main() {
@@ -50,6 +51,19 @@ class _SelectUsernameState extends State<SelectUsername> {
 
   String? username;
   final controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () async {
+      String? username = await LocalStorage.instance.get('username');
+      if (username != null) {
+        setState(() {
+          this.username = username;
+        });
+      }
+    },);
+  }
 
   @override
   void dispose() {
@@ -108,6 +122,7 @@ class _SelectUsernameState extends State<SelectUsername> {
                       setState(() {
                         if (controller.text.isNotEmpty) {
                           username = controller.text;
+                          LocalStorage.instance.set('username', username!);
                         }
                       });
                     },
@@ -121,6 +136,7 @@ class _SelectUsernameState extends State<SelectUsername> {
                         setState(() {
                           if (controller.text.isNotEmpty) {
                             username = controller.text;
+                            LocalStorage.instance.set('username', username!);
                           }
                         });
                       },
@@ -331,7 +347,7 @@ class _MainPageState extends State<MainPage> {
           fileName: fileName,
           fileBytes: fileBytes,
         );
-        debugPrint('File Send');
+        debugPrint('File Sent');
       }
     } finally {
       setState(() {
