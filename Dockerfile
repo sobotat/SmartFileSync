@@ -15,5 +15,5 @@
 # 3. To Run Docker
 # docker run -t smart-file-sync -d --restart unless-stopped -p 8003:80 smart-file-sync
 
-FROM httpd:2.4
+FROM httpd
 COPY ./build/web/ /usr/local/apache2/htdocs/
