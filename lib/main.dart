@@ -32,7 +32,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SFS',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue.shade200),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue.shade200).copyWith(
+          background: const Color(0xFF313338),
+          primary: const Color(0xFF2b2d31),
+          secondary: const Color(0xFF1e1f22),
+        ),
+        textTheme: Theme.of(context).textTheme.copyWith(
+          bodySmall: const TextStyle(color: Colors.white),
+          bodyMedium: const TextStyle(color: Colors.white),
+          bodyLarge: const TextStyle(color: Colors.white),
+        ),
         useMaterial3: true,
       ),
       routerConfig: AppRouter.instance.router,
@@ -75,7 +84,18 @@ class _SelectUsernameState extends State<SelectUsername> {
   Widget build(BuildContext context) {
     return username == null ? Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xffad6610),
+                Theme.of(context).colorScheme.secondary,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ),
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -84,7 +104,7 @@ class _SelectUsernameState extends State<SelectUsername> {
             ),
             Padding(
               padding: EdgeInsets.only(left: 10),
-              child: Text('SFS - Username'),
+              child: Text('SFS - Username', style: TextStyle(color: Colors.white),),
             )
           ],
         ),
@@ -173,12 +193,12 @@ class _MainPageState extends State<MainPage> {
   PeerApi? peerApi;
   FileTransfer? fileTransfer;
 
-  List<String> messages = [];
+  List<String> messages = []; // ['{"username": "User", "message": "123", "time": "00:00"}'];
 
   String? connectDescription;
   String connectionState = 'Closed';
   bool showConnectData = false;
-  double progress = 0;
+  double progress = 0, lastProgress = 0;
   bool readingFile = false;
 
   final connectStringController = TextEditingController();
@@ -210,7 +230,15 @@ class _MainPageState extends State<MainPage> {
         setState(() {
           connectDescription = iceDescription;
         });
-        Clipboard.setData(ClipboardData(text: connectDescription ?? ''));
+
+        if (connectDescription != null) {
+            Clipboard.setData(ClipboardData(text: connectDescription!))
+                .onError((error, stackTrace) {
+                  debugPrint('Clipboard failed -> $connectDescription');
+                });
+        } else {
+          debugPrint('Failed to get Connect Description');
+        }
       },
       onMessage: (message) {
         setState(() {
@@ -276,13 +304,11 @@ class _MainPageState extends State<MainPage> {
     debugPrint('N[${fileChunked.fileName}] FS[${fileChunked.fileSize}] BS[${bytes.length}]');
 
     FileDownloader.instance.downloadFile(fileChunked);
-
   }
 
   void onProgress(double progress) {
-    setState(() {
-      this.progress = progress;
-    });
+    this.progress = progress;
+    setState(() { });
   }
 
   void createOffer() {
@@ -360,16 +386,29 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xffad6610),
+                Theme.of(context).colorScheme.secondary,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ),
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.wifi
+              Icons.wifi,
+              color: Colors.white,
             ),
             Padding(
               padding: EdgeInsets.only(left: 10),
-              child: Text('SFS - Chat'),
+              child: Text('SFS - Chat', style: TextStyle(color: Colors.white),),
             )
           ],
         ),
@@ -380,165 +419,203 @@ class _MainPageState extends State<MainPage> {
                 showConnectData = !showConnectData;
               });
             },
-            icon: Icon(showConnectData ? Icons.remove : Icons.add),
+            icon: Icon(showConnectData ? Icons.remove : Icons.add, color: Colors.white,),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: progress == 0 || progress == 1 ? Container() :
-            LinearProgressIndicator(
-              minHeight: 5,
-              value: progress,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: false ? Container() :
+              LinearProgressIndicator(
+                minHeight: 5,
+                value: progress,
+                color: !(fileTransfer?.neededResendMissing ?? true) ? Colors.green : Colors.orange,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+              ),
             ),
-          ),
-          Center(
-            child: FractionallySizedBox(
-              heightFactor: 0.75,
-              widthFactor: 0.9,
-              child: Container(
-                padding: const EdgeInsets.all(15),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.cyan.shade200,
-                      Colors.blueAccent.shade200,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            Center(
+              child: FractionallySizedBox(
+                heightFactor: 0.75,
+                widthFactor: 0.9,
+                child: Container(
+                  padding: const EdgeInsets.all(15),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xffad6610),
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.grey[100],
-                        ),
-                        child: ListView.builder(
-                          controller: scrollController,
-                          shrinkWrap: true,
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            Map<String,dynamic> message = jsonDecode(messages[index]);
-                            String user = message['username'] ?? '';
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Theme.of(context).colorScheme.background,
+                          ),
+                          child: ListView.builder(
+                            controller: scrollController,
+                            shrinkWrap: true,
+                            itemCount: messages.length,
+                            itemBuilder: (context, index) {
+                              Map<String,dynamic> message = jsonDecode(messages[index]);
+                              String user = message['username'] ?? '';
 
-                            return Container(
-                              width: 400,
-                              alignment: Alignment.centerLeft,
-                              margin: const EdgeInsets.all(5),
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                color: peerApi!.userId == user ? Colors.cyan[100] : Colors.grey[400],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            user,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
+                              return Container(
+                                width: 400,
+                                alignment: Alignment.centerLeft,
+                                margin: const EdgeInsets.all(5),
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: peerApi!.userId == user ? const Color(0xffad6610) : const Color(0xFF1e1f22),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Expanded(
+                                      flex: 5,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              user,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 10,),
-                                          Flexible(
-                                            child: Text(
-                                              message['message'],
-                                              softWrap: true,
+                                            const SizedBox(width: 10,),
+                                            Flexible(
+                                              child: Text(
+                                                message['message'],
+                                                softWrap: true,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Text(message['time']),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          }
+                                    Expanded(
+                                      child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text(message['time']),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              );
+                            }
+                          ),
                         ),
                       ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          flex: 10,
-                          child: TextField(
-                            controller: messageController,
-                            focusNode: messageFocus,
-                            decoration: const InputDecoration(
-                              labelText: 'Message Text',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            flex: 10,
+                            child: TextField(
+                              controller: messageController,
+                              focusNode: messageFocus,
+                              decoration: InputDecoration(
+                                labelText: 'Message Text',
+
+                                labelStyle:MaterialStateTextStyle.resolveWith((states) {
+                                    return const TextStyle(color: Colors.white, letterSpacing: 1.1);
+                                }),
+                                floatingLabelStyle: MaterialStateTextStyle.resolveWith((states) {
+                                    return const TextStyle(color: Colors.white, letterSpacing: 1.1);
+                                }),
+                                enabledBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Colors.white,
+                                    )
+                                ),
+                                focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Colors.white,
+                                    )
+                                ),
+                              ),
+                              textInputAction: TextInputAction.go,
+                              onSubmitted: (value) {
+                                send();
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: IconButton(
+                              onPressed: () {
+                                send();
+                              },
+                              icon: const Icon(
+                                Icons.send,
+                                color: Colors.white,
+                              )
+                            ),
+                          )
+                        ],
+                      ),
+                      (connectionState != 'Connected' || showConnectData) ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: connectStringController,
+                            decoration: InputDecoration(
+                              labelText: 'Connect Data',
+                              labelStyle:MaterialStateTextStyle.resolveWith((states) {
+                                return const TextStyle(color: Colors.white, letterSpacing: 1.1);
+                              }),
+                              floatingLabelStyle: MaterialStateTextStyle.resolveWith((states) {
+                                return const TextStyle(color: Colors.white, letterSpacing: 1.1);
+                              }),
+                              enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.white,
+                                  )
+                              ),
+                              focusedBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.white,
+                                  )
+                              ),
                             ),
                             textInputAction: TextInputAction.go,
                             onSubmitted: (value) {
-                              send();
+                              connect();
                             },
                           ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: IconButton(
-                            onPressed: () {
-                              send();
-                            },
-                            icon: const Icon(
-                              Icons.send,
-                            )
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                                onPressed: connect, child: const Text('Connect')),
                           ),
-                        )
-                      ],
-                    ),
-                    (connectionState != 'Connected' || showConnectData) ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: connectStringController,
-                          decoration: const InputDecoration(
-                            labelText: 'Connect Data',
+                          Text(connectionState,
+                            style: TextStyle(
+                              color: getConnectionStateColor(),
+                            ),
                           ),
-                          textInputAction: TextInputAction.go,
-                          onSubmitted: (value) {
-                            connect();
-                          },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(
-                              onPressed: connect, child: const Text('Connect')),
-                        ),
-                        Text(connectionState,
-                          style: TextStyle(
-                            color: getConnectionStateColor(),
-                          ),
-                        ),
-                      ],
-                    ) : Container(),
-                  ],
+                        ],
+                      ) : Container(),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
