@@ -24,7 +24,7 @@ class FileReceiverHandler extends MessageHandler {
   void handleMessage(String message) {
     var decoded = jsonDecode(message);
 
-    switch(decoded['type']){
+    switch(decoded['type']) {
       case 'FileInfo':
         _receivedNewFileInfo(decoded);
         break;
@@ -94,9 +94,10 @@ class FileReceiverHandler extends MessageHandler {
     List<int> missing = _fileChunked!.checkForMissingChunks();
 
     if (missing.isNotEmpty) {
-      //TODO: implement missing resent and remove _sendFileReceived
-      _completer!.completeError(Exception('Missing Chunks $missing'));
-      _sendFileReceived();
+      _peerApi.sendData(jsonEncode({
+        'type': 'FileMissingBytes',
+        'missing': missing,
+      }));
       return;
     }
 

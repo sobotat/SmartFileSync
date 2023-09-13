@@ -34,6 +34,10 @@ class FileSenderHandler extends MessageHandler {
         break;
       case 'FileReceived':
         _fileReceived();
+        break;
+      case 'FileMissingBytes':
+        _fileMissingBytes(decoded);
+        break;
     }
   }
 
@@ -44,7 +48,7 @@ class FileSenderHandler extends MessageHandler {
     required List<List<int>> chunkedBytes,
   }) {
     isSendingFile = true;
-    this._chunkedBytes = chunkedBytes;
+    _chunkedBytes = chunkedBytes;
 
     _peerApi.sendData(jsonEncode({
       'type':'FileInfo',
@@ -72,7 +76,11 @@ class FileSenderHandler extends MessageHandler {
         _fileTransfer.onProgress!(index / _chunkedBytes.length);
       }
 
-      await Future.delayed(const Duration(milliseconds: 5));
+      while (true) {
+        int bufferAmount = _peerApi.getDataChannelBufferedAmount();
+        if (bufferAmount <= 0) break;
+        await Future.delayed(const Duration(milliseconds: 1));
+      }
     }
 
     await Future.delayed(const Duration(milliseconds: 15));
@@ -103,5 +111,34 @@ class FileSenderHandler extends MessageHandler {
     _completer = null;
     isSendingFile = false;
     _chunkedBytes = [];
+  }
+
+  Future<void> _fileMissingBytes(Map<String, dynamic> response) async {
+    List<int> missing = List<int>.from(response['missing'] ?? []);
+    int resented = 0;
+
+    print('Resending Missing Chunks $missing');
+    for (int index in missing) {
+      _peerApi.sendData(jsonEncode({
+        'type':'FileData',
+        'chunkIndex': index,
+        'chunk': _chunkedBytes[index]
+      }));
+
+      resented += 1;
+
+      if(_fileTransfer.onProgress != null) {
+        _fileTransfer.onProgress!((_chunkedBytes.length - missing.length + resented) / _chunkedBytes.length);
+      }
+
+      while (true) {
+        int bufferAmount = _peerApi.getDataChannelBufferedAmount();
+        if (bufferAmount <= 0) break;
+        await Future.delayed(const Duration(milliseconds: 1));
+      }
+    }
+
+    await Future.delayed(const Duration(milliseconds: 15));
+    _fileSendComplete();
   }
 }

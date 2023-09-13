@@ -215,6 +215,16 @@ class PeerApi {
     _dataChannel!.send(RTCDataChannelMessage(data));
   }
 
+  int getMessageChannelBufferedAmount() {
+    if (_messageChannel == null) return 0;
+    return _messageChannel!.bufferedAmount ?? 0;
+  }
+
+  int getDataChannelBufferedAmount() {
+    if (_dataChannel == null) return 0;
+    return _dataChannel!.bufferedAmount ?? 0;
+  }
+
   void close() {
     if (_messageChannel != null) {
       _messageChannel!.close();
