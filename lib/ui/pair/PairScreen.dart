@@ -28,6 +28,11 @@ class _PairScreenState extends State<PairScreen> {
     super.initState();
     peerApi = PeerApi(
       onIceDescription: (iceDescription) {
+        if (!context.mounted) {
+          debugPrint('Ice: $iceDescription');
+          return;
+        }
+
         setState(() {
           connectDescription = iceDescription;
         });
