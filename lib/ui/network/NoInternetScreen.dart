@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_file_sync/src/config/AppTheme.dart';
 import 'package:smart_file_sync/src/services/NetworkChecker.dart';
+import 'package:smart_file_sync/ui/assets/Button.dart';
 
 class NoInternetScreen extends StatefulWidget {
   const NoInternetScreen({
@@ -35,7 +37,7 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: SafeArea(
         child:
         Stack(
@@ -45,26 +47,26 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Padding(
+                    const Padding(
                       padding: EdgeInsets.all(10),
                       child: Text(
                         'No Internet',
                         style: TextStyle(fontSize: 40),
                       ),
                     ),
-                    // Button(
-                    //   text: 'Refresh',
-                    //   maxWidth: 150,
-                    //   onClick: (context) => refresh(context),
-                    //   child: !refreshing ? null : SizedBox(
-                    //     width: 25,
-                    //     height: 25,
-                    //     child: CircularProgressIndicator(
-                    //       strokeWidth: 3,
-                    //       color: Theme.of(context).extension<AppCustomColors>()!.accent,
-                    //     ),
-                    //   ),
-                    // )
+                    Button(
+                      text: 'Refresh',
+                      maxWidth: 150,
+                      onClick: (context) => refresh(context),
+                      child: !refreshing ? null : SizedBox(
+                        width: 25,
+                        height: 25,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Theme.of(context).extension<AppCustomColors>()!.accent,
+                        ),
+                      ),
+                    )
                   ],
                 ),
               ),
