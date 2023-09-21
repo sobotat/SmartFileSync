@@ -8,28 +8,18 @@ class PeerApi {
   Function(String message)? onMessage;
   Function(String data)? onData;
   Function(String? iceDescription) onIceDescription;
-  Function()? onConnected;
-  Function()? onConnecting;
-  Function()? onClosed;
-  Function()? onDisconected;
-  Function()? onFailed;
+  Function(String state)? onStateChanged;
 
   RTCPeerConnection? _connection;
   RTCDataChannel? _messageChannel;
   RTCDataChannel? _dataChannel;
   bool isInit = false;
-  String userId;
 
   PeerApi({
-    required this.userId,
     required this.onIceDescription,
     this.onMessage,
     this.onData,
-    this.onConnected,
-    this.onConnecting,
-    this.onClosed,
-    this.onDisconected,
-    this.onFailed
+    this.onStateChanged
   }){
     init();
   }
@@ -78,16 +68,17 @@ class PeerApi {
       };
 
       _connection!.onConnectionState = (state) {
+        if(onStateChanged == null) return;
         if (state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
-          if (onClosed != null) onClosed!();
+          onStateChanged!('Closed');
         } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnecting) {
-          if (onConnecting != null) onConnecting!();
+          onStateChanged!('Connecting');
         } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-          if (onConnected != null) onConnected!();
+          onStateChanged!('Connected');
         } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
-          if (onFailed != null) onFailed!();
+          onStateChanged!('Failed');
         } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
-          if (onDisconected != null) onDisconected!();
+          onStateChanged!('Disconnected');
         }
       };
 
@@ -188,7 +179,6 @@ class PeerApi {
     DateTime dateTime = DateTime.now();
 
     String jsonEncoded = jsonEncode({
-      'username': userId,
       'message': message,
       'time': '${dateTime.hour}:${dateTime.minute}'
     });
