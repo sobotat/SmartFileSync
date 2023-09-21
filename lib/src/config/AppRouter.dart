@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:smart_file_sync/main.dart';
+import 'package:smart_file_sync/src/config/AppData.dart';
 import 'package:smart_file_sync/src/security/AppSecurity.dart';
 import 'package:smart_file_sync/src/services/NetworkChecker.dart';
+import 'package:smart_file_sync/ui/fileSend/SendFileScreen.dart';
+import 'package:smart_file_sync/ui/main/SelectScreen.dart';
 import 'package:smart_file_sync/ui/network/NoInternetScreen.dart';
+import 'package:smart_file_sync/ui/pair/PairScreen.dart';
 
 class AppRouter {
 
@@ -15,37 +19,42 @@ class AppRouter {
       GoRoute(
         path: '/',
         name: '/',
-        // redirect: (context, state) {
-        //   if (!kIsWeb) {
-        //     return '/main';
-        //   }
-        //   return null;
-        // },
-        builder: (context, state) {
-          return const SelectUsername();
+        redirect: (context, state) {
+          if (!AppData.instance.isPair()) return '/pair';
+          return null;
         },
+        builder: (context, state) {
+          return const SelectScreen();
+        },
+        routes: [
+          GoRoute(
+            path: 'sync_file',
+            name: 'sync-file',
+            builder: (context, state) {
+              return const Placeholder();
+            },
+          ),
+          GoRoute(
+            path: 'send_file',
+            name: 'send-file',
+            builder: (context, state) {
+              return const SendFileScreen();
+            },
+          ),
+          GoRoute(
+            path: 'chat',
+            name: 'chat',
+            builder: (context, state) {
+              return const Placeholder();
+            },
+          ),
+        ]
       ),
       GoRoute(
-        path: '/sign-in',
-        name: 'sign-in',
+        path: '/pair',
+        name: 'pair',
         builder: (context, state) {
-          //return SignIn(path: state.uri.queryParameters['path'] ?? '/');
-          return const Placeholder();
-        },
-      ),
-      GoRoute(
-        path: '/sign-out',
-        name: 'sign-out',
-        builder: (context, state) {
-          return const Placeholder();
-        },
-      ),
-      GoRoute(
-        path: '/main',
-        name: 'main',
-        redirect: authCheckRedirect,
-        builder: (context, state) {
-          return const Placeholder();
+          return const PairScreen();
         },
       ),
       GoRoute(
