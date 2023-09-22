@@ -33,9 +33,15 @@ class _SendFileScreenState extends State<SendFileScreen> {
         }
       },
       onReceivedInfo: (fileInfo) {
-        fileTransfer!.acceptFile().then((value) => receivedFile(value));
+        fileTransfer.acceptFile().then((value) => receivedFile(value));
       },
     );
+  }
+
+  @override
+  void dispose() {
+    fileTransfer.dispose();
+    super.dispose();
   }
 
   void receivedFile(FileChunked? fileChunked) {
@@ -99,7 +105,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
               child: LinearProgressIndicator(
                 minHeight: 5,
                 value: progress,
-                color: !(fileTransfer?.neededResendMissing ?? true) ? Colors.green : Colors.orange,
+                color: fileTransfer.neededResendMissing ? Colors.green : Colors.orange,
                 backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             ),
