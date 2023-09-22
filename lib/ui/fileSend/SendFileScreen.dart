@@ -18,6 +18,7 @@ class SendFileScreen extends StatefulWidget {
 class _SendFileScreenState extends State<SendFileScreen> {
 
   double progress = 0;
+  bool isCanceled = false;
   late FileTransfer fileTransfer;
 
   @override
@@ -26,14 +27,19 @@ class _SendFileScreenState extends State<SendFileScreen> {
     fileTransfer = FileTransfer(
       peerApi: AppData.instance.peerApi!,
       onProgress: (progress) {
-        if (context.mounted) {
+        if (mounted) {
           setState(() {
             this.progress = progress;
           });
         }
       },
       onReceivedInfo: (fileInfo) {
-        fileTransfer.acceptFile().then((value) => receivedFile(value));
+        isCanceled = false;
+        fileTransfer.acceptFile()
+            .then((value) => receivedFile(value))
+            .onError((error, stackTrace) {
+              _handleFileException(error);
+            });
       },
     );
   }
@@ -59,7 +65,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
 
     FileDownloader.instance.downloadFile(fileChunked);
 
-    if(!context.mounted) return;
+    if(!mounted) return;
     Toast.makeToast(text: 'File Downloaded', context: context,
       duration: ToastDuration.large,
       icon: Icons.file_download
@@ -75,6 +81,8 @@ class _SendFileScreenState extends State<SendFileScreen> {
       String fileName = result.files.first.name;
       List<int> fileBytes = [];
 
+      isCanceled = false;
+
       debugPrint('File Read Started');
       await for (List<int> bytes in result.files.first.readStream!) {
         fileBytes.addAll(bytes);
@@ -84,13 +92,35 @@ class _SendFileScreenState extends State<SendFileScreen> {
       await fileTransfer.sendFile(
         fileName: fileName,
         fileBytes: fileBytes,
-      );
+      ).onError((error, stackTrace) {
+        _handleFileException(error);
+      });
+
+      if (isCanceled) return;
+
       debugPrint('File Sent');
-      if(!context.mounted) return;
-      Toast.makeToast(text: 'File Send', context: context,
+      if(!mounted) return;
+      Toast.makeToast(text: 'File Sent', context: context,
           duration: ToastDuration.large,
           icon: Icons.file_upload
       );
+    }
+  }
+
+  void _handleFileException(Object? error) {
+    if(error == null) return;
+    if(error is FileCanceledException) {
+      debugPrint('File was Canceled');
+      if (mounted) {
+        setState(() {
+          isCanceled = true;
+        });
+
+        Toast.makeToast(text: 'File Canceled', context: context,
+            duration: ToastDuration.large,
+            icon: Icons.highlight_off_sharp
+        );
+      }
     }
   }
 
@@ -105,7 +135,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
               child: LinearProgressIndicator(
                 minHeight: 5,
                 value: progress,
-                color: fileTransfer.neededResendMissing ? Colors.green : Colors.orange,
+                color: isCanceled ? Colors.red : (fileTransfer.neededResendMissing ? Colors.green : Colors.orange),
                 backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             ),
