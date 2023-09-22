@@ -100,7 +100,7 @@ class FileSenderHandler extends MessageHandler {
 
   void _fileRejected() {
     if (_completer != null) {
-      _completer!.completeError(Exception('Receiver Rejected File'));
+      _completer!.completeError(FileRejectedException());
     }
     _resetSender();
   }
@@ -151,7 +151,7 @@ class FileSenderHandler extends MessageHandler {
 
   void _fileCanceled() {
     if (_completer != null) {
-      _completer!.completeError(Exception('File Canceled'));
+      _completer!.completeError(FileCanceledException());
     }
     _resetSender();
   }

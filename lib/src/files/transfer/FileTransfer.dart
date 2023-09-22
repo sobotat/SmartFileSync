@@ -51,7 +51,8 @@ class FileTransfer {
       chunkCount: chunkedBytes.length,
       chunkedBytes: chunkedBytes,
     ).onError((error, stackTrace) {
-      print(error.toString());
+      updateHandler(false);
+      if(error != null) throw error;
     });
 
     updateHandler(false);
@@ -120,4 +121,12 @@ class FileTransfer {
     );
     peerApi.onData = (data) => messageHandler.handleMessage(data);
   }
+}
+
+class FileCanceledException implements Exception {
+
+}
+
+class FileRejectedException implements Exception {
+
 }

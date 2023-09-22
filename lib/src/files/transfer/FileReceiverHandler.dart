@@ -125,7 +125,7 @@ class FileReceiverHandler extends MessageHandler {
 
   void _fileCanceled() {
     if (_completer != null) {
-      _completer!.completeError(Exception('File Canceled'));
+      _completer!.completeError(FileCanceledException());
     }
     _resetReceiver();
   }
