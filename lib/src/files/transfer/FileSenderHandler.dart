@@ -38,6 +38,9 @@ class FileSenderHandler extends MessageHandler {
       case 'FileMissingBytes':
         _fileMissingBytes(decoded);
         break;
+      case 'FileCanceled':
+        _fileCanceled();
+        break;
     }
   }
 
@@ -64,6 +67,7 @@ class FileSenderHandler extends MessageHandler {
   Future<void> _fileAccepted() async {
     int index = 0;
     for (List<int> chunk in _chunkedBytes) {
+      if(!isSendingFile) return;
       _peerApi.sendData(jsonEncode({
         'type':'FileData',
         'chunkIndex': index,
@@ -88,6 +92,7 @@ class FileSenderHandler extends MessageHandler {
   }
 
   void _fileSendComplete(){
+    if(!isSendingFile) return;
     _peerApi.sendData(jsonEncode({
       'type': 'FileSendComplete'
     }));
@@ -142,5 +147,12 @@ class FileSenderHandler extends MessageHandler {
 
     await Future.delayed(const Duration(milliseconds: 15));
     _fileSendComplete();
+  }
+
+  void _fileCanceled() {
+    if (_completer != null) {
+      _completer!.completeError(Exception('File Canceled'));
+    }
+    _resetSender();
   }
 }

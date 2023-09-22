@@ -34,6 +34,9 @@ class FileReceiverHandler extends MessageHandler {
       case 'FileSendComplete':
         _receivedFileSendComplete();
         break;
+      case 'FileCanceled':
+        _fileCanceled();
+        break;
     }
   }
 
@@ -68,6 +71,7 @@ class FileReceiverHandler extends MessageHandler {
   }
 
   void _receivedFileData(Map<String, dynamic> data) {
+    if (!isReceivingFile) return;
     if (_fileChunked == null) {
       throw Exception('Error Received Data: Dont received file info');
     }
@@ -117,5 +121,12 @@ class FileReceiverHandler extends MessageHandler {
     _completer = null;
     isReceivingFile = false;
     _fileChunked = null;
+  }
+
+  void _fileCanceled() {
+    if (_completer != null) {
+      _completer!.completeError(Exception('File Canceled'));
+    }
+    _resetReceiver();
   }
 }

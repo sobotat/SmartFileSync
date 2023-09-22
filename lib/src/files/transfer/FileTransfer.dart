@@ -1,5 +1,6 @@
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smart_file_sync/src/files/transfer/FileChunked.dart';
 import 'package:smart_file_sync/src/files/transfer/FileReceiverHandler.dart';
@@ -70,6 +71,17 @@ class FileTransfer {
     handler.rejectFile();
   }
 
+  void dispose() {
+    cancelFileTransfer();
+  }
+
+  void cancelFileTransfer() {
+    String message = jsonEncode({
+      'type': 'FileCanceled',
+    });
+    peerApi.sendData(message);
+    messageHandler.handleMessage(message);
+  }
 
   Future<List<List<int>>> _chunkData(List<int> fileBytes, int chunkSize) {
     return Future<List<List<int>>>(() {
